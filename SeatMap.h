@@ -6,10 +6,10 @@
 using namespace std;
 
 class SeatMap {
-	private;
-	int rows;
-	int cols;
-	char** seats; //2D array
+private:    
+    int rows;
+    int cols;
+    char** seats; //2D array
 public:
     //constructor
     SeatMap(int r, int c) : rows(r), cols(c) {
@@ -68,7 +68,7 @@ public:
     //Prints the seating layout 
     void display() {
         int width = cols * 3;
-        int pad(width > 11) ? (width - 11) / 2 : 0;
+        int pad = (width > 11) ? (width - 11) / 2 : 0;   
         cout << "\n     " << string(pad, ' ') << "S C R E E N\n";
         cout << "     " << string(width, '=') << "\n";
         cout << "     ";
@@ -81,8 +81,8 @@ public:
         for (int r = 0; r < rows; r++) {
             cout << "  " << (char)('A' + r) << "  ";
             for (int c = 0; c < cols; c++) {
-                char ch = seat[r][c];
-                cout < ' ' << ch < ' ';
+                char ch = seats[r][c];                    
+                cout << ' ' << ch << ' ';               
             }
             cout << "  " << (char)('A' + r) << "\n";
 
