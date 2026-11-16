@@ -1,3 +1,151 @@
+// PrimeScreen is a Smart Cinema Ticketing and Seat Allocation System
+// Group 7
+// PROGRESS: 2D array (SeatMap), singly linked list (BookingList), stack (cancellation undo)
+// Compiled and ran with g++ -std=c++17 main.cpp -o cinema
+
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include "SeatMap.h"
+#include "Booking.h"
+#include "Stack.h"
+using namespace std;
+
+const int ROWS = 8;
+const int COLS = 10;
+const int PRICE = 12;
+
+// input helpers
+
+bool readLine(const string& prompt, string& out) {
+    cout << prompt;
+    return (bool)getline(cin, out);
+}
+
+// Keeps asking until the user types a whole number between lo = lower and  hi = higher. 
+// Returns -1 if input is closed.
+
+int readInt(const string& prompt, int lo, int hi) {
+    string s;
+    while (readLine(prompt, s)) {
+        if (s.empty() || s.size() > 6) { 
+            cout << "  [!] Enter a number from " << lo << " to " << hi << ".\n"; 
+            continue; 
+        }
+        bool ok = true;
+        int v = 0;
+        for (size_t i = 0; i < s.size(); i++) {
+            if (s[i] < '0' || s[i] > '9') { 
+                ok = false; 
+                break; 
+            }
+            v = v * 10 + (s[i] - '0');
+        }
+        if (!ok || v < lo || v > hi) { 
+            cout << "  [!] Enter a number from " << lo << " to " << hi << ".\n"; 
+            continue; 
+        }
+        return v;
+    }
+    return -1;
+}
+
+void clearScreen() {
+    system("cls");
+}
+
+void pause() {
+    string s;
+    readLine("\n  Press Enter to continue...", s);
+}
+
+void printHeader() {
+    cout << "\n  =====================================================\n"
+        << "                   P R I M E S C R E E N\n"
+        << "        Smart Cinema Ticketing & Seat Allocation\n"
+        << "  =====================================================\n"
+        << "  SeatMap + BookingList + Stack\n";
+}
+
+// This function reads a seat in row letter and colomn nubmer such as "C5" (row letter + seat number).
+bool parseSeat(const string& s, int& row, int& col) {
+    if (s.size() < 2) return false;
+    char ch = s[0];
+
+    if (ch >= 'a' && ch <= 'z') 
+        ch = (char)(ch - 'a' + 'A');
+
+    if (ch < 'A' || ch >= 'A' + ROWS) return false;
+    int n = 0;
+
+    for (size_t i = 1; i < s.size(); i++) {
+        if (s[i] < '0' || s[i] > '9' || i > 3) return false;
+        n = n * 10 + (s[i] - '0');
+    }
+
+    if (n < 1 || n > COLS) return false;
+    row = ch - 'A';
+    col = n - 1;
+    return true;
+}
+
+string seatRange(int row, int col, int count) {
+    string a = string(1, (char)('A' + row)) + to_string(col + 1);
+    if (count <= 1) return a;
+    return a + "-" + string(1, (char)('A' + row)) + to_string(col + count);
+}
+
+void printTicket(const Booking& b) {
+    cout << "\n  ---------------- TICKET ----------------\n"
+        << "  Ticket ID : " << b.ticketID << "\n"
+        << "  Customer  : " << b.customerName << "\n"
+        << "  Seats     : " << seatRange(b.row, b.startCol, b.seatCount) << "  (" << b.seatCount << " seat(s))\n"
+        << "  Total     : $" << b.totalPrice << "\n"
+        << "  ----------------------------------------\n";
+}
+
+// Menu
+
+void bookSeats(SeatMap& map, BookingList& list, int& nextTicketID) {
+    map.display();
+    int k = readInt("\n  How many seats together (1-8, 0 = back): ", 0, 8);
+    if (k <= 0) return;
+
+    string name;
+
+    if (!readLine("  Customer name: ", name) || name.empty()) 
+    { 
+        cout << "  [!] Name cannot be empty.\n"; 
+        return; 
+    }
+
+    string text;
+    if (!readLine("  First seat of the block (example C5): ", text)) return;
+
+    int row = 0, col = 0;
+    if (!parseSeat(text, row, col)) 
+    { 
+        cout << "  [!] That seat does not exist.\n"; 
+        return; 
+    }
+
+    if (!map.bookBlock(row, col, k)) {                       // 2D array checks and marks the seats
+        cout << "  [!] " << k << " seats from " << seatRange(row, col, 1) << " are not all free.\n";
+        return;
+    }
+
+    Booking b;
+    b.ticketID = nextTicketID++;
+    b.customerName = name;
+    b.showID = 1;
+    b.row = row;
+    b.startCol = col;
+    b.seatCount = k;
+    b.totalPrice = k * PRICE;
+    list.addBooking(b);                                      // linked list and add at the tail
+    printTicket(b);
+}
+
 void viewBookings(const BookingList& list) {
 
     cout << "\n  Bookings (" << list.getCount() << " tickets, oldest first)\n";
